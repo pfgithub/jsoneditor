@@ -13,6 +13,8 @@ const layer = "<!>layer" as UUID;
 const schema_nodes = "<!>schema_nodes" as UUID;
 const schema_links = "<!>schema_links" as UUID;
 
+const list_display_mode = sc.enum("all", "tab-bar", "summary-edit");
+
 const node_link_schema = sc.link(schema_nodes);
 const field_opts = sc.object({
   title: sc.optional(sc.string()),
@@ -24,14 +26,14 @@ const object_field = sc.object({
 });
 const object_opts = sc.object({
   summarize: sc.optional(sc.function("self", sc.string())),
-  display_mode: sc.enum("all", "tab-bar"),
+  display_mode: list_display_mode,
 });
 const object_schema = sc.object({
   fields: sc.array(object_field),
   opts: object_opts,
 });
 const array_opts = sc.object({
-  view_mode: sc.enum("all", "tab-bar"),
+  view_mode: list_display_mode,
 });
 const array_schema = sc.object({
   child: node_link_schema,
@@ -207,8 +209,12 @@ export const root_schema: RootSchema = {
 
     schema: sc.object({
       root_type: sc.link(schema_nodes),
-      types: sc.allLinks(schema_nodes),
-      links: sc.allLinks(schema_links),
+      types: sc.allLinks(schema_nodes, {
+        view_mode: "summary-edit",
+      }),
+      links: sc.allLinks(schema_links, {
+        view_mode: "summary-edit",
+      }),
     }),
   }, {display_mode: "tab-bar"}),
   symbols: {

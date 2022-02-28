@@ -4,17 +4,17 @@ import { Button } from "./components";
 import { getState, modValue, Path } from "./editor_data";
 import { isObject } from "./guards";
 import { Key } from "./Key";
-import { AllLinksSchema, ArraySchema, BooleanSchema, LinkSchema, NodeSchema, ObjectSchema, sc, StringSchema, summarize, UnionSchema } from "./schema";
+import { AllLinksSchema, ArraySchema, BooleanSchema, LinkSchema, ListDisplayMode, NodeSchema, ObjectSchema, sc, StringSchema, summarize, UnionSchema } from "./schema";
 import { object_active_field } from "./symbols";
 import { RichtextEditor } from "./TextEditor";
-import { SwitchKind } from "./util";
+import { assertNever, SwitchKind } from "./util";
 import { UUID, uuid } from "./uuid";
 
 // switch arrays to use objects
 // and figure out how to make <For> accept a key
 
 function TabOrListEditor<T>(props: {
-  mode: undefined | "all" | "tab-bar",
+  mode: undefined | ListDisplayMode,
   tabs: ({
     key: string | (() => string),
     title: string,
@@ -23,10 +23,9 @@ function TabOrListEditor<T>(props: {
   children: (key: unknown) => JSX.Element,
 }): JSX.Element {
   return createMemo((): JSX.Element => {
-    if(props.mode === "tab-bar") return untrack((): JSX.Element => {
+    const mode = props.mode;
+    if(mode === "tab-bar") return untrack((): JSX.Element => {
       const [active, setActive] = props.active;
-      // TODO: active, setActive should be stored in state somehow
-      // maybe have a seperate state thing for active values or something
       const isSelected = createSelector(active);
 
       const tabs = createMemo(() => props.tabs);
@@ -55,25 +54,64 @@ function TabOrListEditor<T>(props: {
         </>}</Show>
       </div>;
     });
-    return untrack((): JSX.Element => {
+    if(mode == null || mode === "all") return untrack((): JSX.Element => {
       return <div class="space-y-2">
         <Key each={props.tabs} by={tab => tab.key}>{(tab, _, key: string | (() => string)) => {
-          return <div>{
-            typeof key === "function" ? <div>
-              <Button onClick={() => {
-                if(typeof key !== "function") return alert("EBAD");
-                key();
-              }}>{tab().title}</Button>
-            </div> : <div>
-              <div>{tab().title}</div>
-              <div class="pl-2 border-l-[0.5rem] border-gray-700">
-                {untrack(() => props.children(key))}
-              </div>
+          if(typeof key === "function") return <div>
+            <Button onClick={() => {
+              if(typeof key !== "function") return alert("EBAD");
+              key();
+            }}>{tab().title}</Button>
+          </div>;
+          return <div>
+            <div>{tab().title}</div>
+            <div class="pl-2 border-l-[0.5rem] border-gray-700">
+              {untrack(() => props.children(key))}
             </div>
+          </div>;
+        }}</Key>
+      </div>;
+    });
+    if(mode === "summary-edit") return untrack((): JSX.Element => {
+      const [active, setActive] = props.active;
+      const isSelected = createSelector(active);
+      // here we actually want active to be 
+      // the only reason we put active in a prop was to support unions
+      // consider: extracting tab-bar out to another component
+      // and then using normal createSignal* here
+      //     (*: createSignal doesn't suppoer hmr yet so we have to hack it)
+
+      return <div class="space-y-2">
+        <Key each={props.tabs} by={tab => tab.key}>{(tab, _, key: string | (() => string)) => {
+          if(typeof key === "function") {
+            return <div><Button onClick={() => {
+              if(typeof key !== "function") return alert("EBAD");
+              key();
+            }}>
+              {tab().title}
+            </Button></div>;
+          }
+          return <div>{
+            isSelected(key) ? <div class="bg-gray-700 rounded-md p-1">
+              <div class="bg-gray-800 rounded-md p-2 space-y-2">
+                <div><Button onClick={() => setActive(() => null)}>Done</Button></div>
+                <div>
+                  {untrack(() => props.children(key))}
+                </div>
+              </div>
+            </div> : <button
+              class="block w-full p-2 rounded-md bg-gray-700 text-left"
+              onClick={() => {
+                setActive(() => key);
+              }}
+            ><div>
+              {"" + key}
+            </div></button>
           }</div>;
         }}</Key>
       </div>;
     });
+    assertNever(mode);
   });
 }
 

@@ -68,6 +68,8 @@ export type NodeSchema =
   | FunctionSchema
 ;
 
+export type ListDisplayMode = "all" | "tab-bar" | "summary-edit";
+
 export type RootSchema = {
   root: NodeSchema,
   symbols: {[key: UUID]: NodeSchema}
@@ -83,7 +85,7 @@ export type ObjectField = {
 };
 export type ObjectOpts = {
   summarize?: undefined | ((v: unknown) => string),
-  display_mode?: undefined | "all" | "tab-bar",
+  display_mode?: undefined | ListDisplayMode,
 };
 export type ObjectSchema = {
   kind: "object",
@@ -93,7 +95,7 @@ export type ObjectSchema = {
   // to flatten the result
 };
 export type ArrayOpts = {
-  view_mode?: undefined | "all" | "tab-bar",
+  view_mode?: undefined | ListDisplayMode,
 };
 export type ArraySchema = {
   kind: "array",

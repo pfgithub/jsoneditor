@@ -30,3 +30,8 @@ export function SwitchKind<T extends {kind: string}>(props: {
       return match();
   });
 }
+
+export function assertNever(v: never): never {
+    console.log("Expected never in", v, "did not get")
+    throw new Error("not never");
+}
