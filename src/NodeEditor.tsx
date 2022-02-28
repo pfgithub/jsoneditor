@@ -93,6 +93,9 @@ function TabOrListEditor<T>(props: {
           }
           return <div>{
             isSelected(key) ? <div class="bg-gray-700 rounded-md p-1">
+              <div class="p-1">
+                {tab().title}
+              </div>
               <div class="bg-gray-800 rounded-md p-2 space-y-2">
                 <div><Button onClick={() => setActive(() => null)}>Done</Button></div>
                 <div>
@@ -105,7 +108,7 @@ function TabOrListEditor<T>(props: {
                 setActive(() => key);
               }}
             ><div>
-              {"" + key}
+              {tab().title}
             </div></button>
           }</div>;
         }}</Key>
